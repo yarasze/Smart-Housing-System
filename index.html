@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101a2b">
+<title>House Innovation | Smart Home</title>
+<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+<style>
+:root{--bg:#0b1220;--panel:#121e31;--panel2:#17263d;--line:#263751;--text:#edf4ff;--muted:#9aabc2;--accent:#64d7bd;--red:#ff6b70;--yellow:#ffc66d;--green:#66d7a5}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(135deg,#0b1220,#101b2d);color:var(--text);font:15px Inter,system-ui,Segoe UI,Arial,sans-serif}
+header{display:flex;align-items:center;justify-content:space-between;padding:20px max(18px,calc((100% - 1180px)/2));border-bottom:1px solid var(--line);background:#0c1728dd;position:sticky;top:0;z-index:5;backdrop-filter:blur(12px)}
+.brand{font-weight:800;letter-spacing:.3px}.brand span{color:var(--accent)}.right{display:flex;gap:10px;align-items:center}.pill{border:1px solid var(--line);padding:8px 11px;border-radius:99px;color:var(--muted);font-size:12px}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#8794a8;margin-right:6px}.dot.on{background:var(--green);box-shadow:0 0 10px var(--green)}
+main{max-width:1180px;margin:28px auto;padding:0 18px}.hero{display:flex;justify-content:space-between;gap:20px;align-items:flex-end;margin-bottom:22px}.eyebrow{color:var(--accent);font-size:12px;letter-spacing:1.8px;text-transform:uppercase;font-weight:700}h1{font-size:clamp(27px,4vw,40px);margin:7px 0}p{color:var(--muted);margin:6px 0;line-height:1.5}.btn{border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:10px 14px;border-radius:11px;cursor:pointer;font-weight:650}.btn.primary{background:var(--accent);color:#08221d;border-color:var(--accent)}.btn:disabled{opacity:.45;cursor:not-allowed}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}.card{background:linear-gradient(145deg,var(--panel),#101a2b);border:1px solid var(--line);border-radius:17px;padding:17px;min-width:0}.card h3{font-size:14px;color:var(--muted);font-weight:600;margin:0 0 13px}.metric{font-size:30px;font-weight:800;letter-spacing:-1px}.unit{font-size:14px;color:var(--muted);font-weight:500}.status{font-size:12px;color:var(--muted);margin-top:8px}.section{margin-top:22px}.sectionhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}.sectionhead h2{font-size:18px;margin:0}.two{display:grid;grid-template-columns:1.15fr .85fr;gap:14px}.sensorline{display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid var(--line)}.sensorline:last-child{border:0}.sensorname{font-weight:650}.tag{font-size:11px;padding:5px 9px;border-radius:99px;background:#23334a;color:var(--muted)}.tag.good{background:#143b35;color:var(--green)}.tag.warn{background:#493523;color:var(--yellow)}.tag.bad{background:#48262e;color:var(--red)}
+.roomgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.room{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:14px}.roomtop{display:flex;justify-content:space-between;align-items:center}.roomname{font-weight:700}.switch{position:relative;width:45px;height:25px;display:inline-block}.switch input{opacity:0;width:0;height:0}.slider{position:absolute;inset:0;border-radius:30px;background:#42516a;cursor:pointer;transition:.2s}.slider:before{content:"";position:absolute;width:17px;height:17px;left:4px;top:4px;background:white;border-radius:50%;transition:.2s}.switch input:checked+.slider{background:#2aa98c}.switch input:checked+.slider:before{transform:translateX(20px)}.room small{display:block;color:var(--muted);margin-top:10px}
+.alerts{max-height:210px;overflow:auto}.alert{padding:10px 0;border-bottom:1px solid var(--line);font-size:13px}.alert:last-child{border:0}.muted{color:var(--muted)}.away{display:flex;justify-content:space-between;gap:14px;align-items:center}.away strong{display:block;margin-bottom:5px}.note{border:1px solid #6b542f;background:#2c261c;color:#f4d7a7;border-radius:12px;padding:12px;font-size:12px;line-height:1.5;margin-top:16px}
+.modal{position:fixed;inset:0;background:#050a13cc;display:none;place-items:center;padding:18px;z-index:10}.modal.show{display:grid}.dialog{max-width:520px;width:100%;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px}.dialog h2{margin:0 0 8px}.field{display:block;margin:13px 0}.field span{display:block;color:var(--muted);font-size:12px;margin-bottom:6px}.field input{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;background:#0b1525;color:var(--text)}.actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}.empty{color:var(--muted);font-size:13px;padding:12px 0}
+footer{max-width:1180px;margin:24px auto;padding:0 18px 35px;color:var(--muted);font-size:12px}
+@media(max-width:850px){.grid{grid-template-columns:repeat(2,1fr)}.two{grid-template-columns:1fr}}@media(max-width:560px){header{padding:14px}.hero{display:block}.hero .btn{margin-top:12px}.roomgrid{grid-template-columns:1fr}.metric{font-size:26px}.grid{gap:9px}.card{padding:13px}}
+</style></head>
+<body>
+<header><div class="brand">HOUSE <span>INNOVATION</span></div><div class="right"><div class="pill"><i class="dot" id="dot"></i><span id="connText">Belum terhubung</span></div><button class="btn" id="settingsBtn">Pengaturan koneksi</button></div></header>
+<main>
+<div class="hero"><div><div class="eyebrow">Smart Home Control Center</div><h1>Rumah dalam kendali.</h1><p id="lastUpdate">Hubungkan aplikasi ke perangkat ESP32 untuk mulai menerima data.</p></div><button class="btn primary" id="connectBtn">Hubungkan perangkat</button></div>
+<div class="grid">
+<div class="card"><h3>Suhu ruangan</h3><div class="metric" id="temp">--<span class="unit"> °C</span></div><div class="status" id="tempStatus">Menunggu data sensor</div></div>
+<div class="card"><h3>Kelembapan</h3><div class="metric" id="humidity">--<span class="unit"> %</span></div><div class="status">Sensor DHT22</div></div>
+<div class="card"><h3>Asap / gas (nilai ADC)</h3><div class="metric" id="gas">--</div><div class="status" id="gasStatus">Menunggu data MQ-2</div></div>
+<div class="card"><h3>Kebocoran air</h3><div class="metric" id="water">--</div><div class="status" id="waterStatus">Sensor belum terbaca</div></div>
+</div>
+<div class="two section">
+<div class="card"><div class="sectionhead"><h2>Status keamanan rumah</h2><span class="tag" id="doorTag">Belum diketahui</span></div>
+<div class="sensorline"><div><div class="sensorname">Pintu / jendela</div><div class="status">Magnetic reed switch</div></div><span class="tag" id="doorState">--</span></div>
+<div class="sensorline"><div><div class="sensorname">ESP32</div><div class="status">Koneksi perangkat</div></div><span class="tag" id="deviceState">Offline</span></div>
+<div class="sensorline"><div><div class="sensorname">Mode rumah</div><div class="status">Pengaturan simulasi kehadiran</div></div><span class="tag" id="awayState">Normal</span></div>
+<div class="note">MQ-2 pada halaman ini menampilkan nilai ADC mentah untuk uji prototipe, bukan konsentrasi ppm atau keputusan aman/tidak aman. Lakukan kalibrasi dan gunakan detektor keselamatan tersertifikasi untuk proteksi nyata.</div>
+</div>
+<div class="card"><div class="sectionhead"><h2>Notifikasi terbaru</h2><button class="btn" id="clearAlerts">Bersihkan</button></div><div class="alerts" id="alerts"><div class="empty">Belum ada notifikasi.</div></div></div>
+</div>
+<div class="section card"><div class="sectionhead"><div><h2>Smart Lighting</h2><p>Kontrol lampu miniatur dari aplikasi.</p></div><span class="tag" id="lightCount">0/3 menyala</span></div>
+<div class="roomgrid">
+<div class="room"><div class="roomtop"><span class="roomname">Ruang tamu</span><label class="switch"><input type="checkbox" data-room="living" class="lightSwitch"><span class="slider"></span></label></div><small id="livingText">Status: menunggu</small></div>
+<div class="room"><div class="roomtop"><span class="roomname">Kamar</span><label class="switch"><input type="checkbox" data-room="bedroom" class="lightSwitch"><span class="slider"></span></label></div><small id="bedroomText">Status: menunggu</small></div>
+<div class="room"><div class="roomtop"><span class="roomname">Teras</span><label class="switch"><input type="checkbox" data-room="porch" class="lightSwitch"><span class="slider"></span></label></div><small id="porchText">Status: menunggu</small></div>
+</div></div>
+<div class="section card"><div class="away"><div><strong>Away Mode — Simulasi rumah berpenghuni</strong><p>ESP32 akan mengatur pola lampu lokal pada rentang pukul 18.00–23.00 waktu Indonesia Barat. Jadwal tetap berjalan saat internet terputus setelah mode diaktifkan.</p></div><label class="switch"><input type="checkbox" id="awaySwitch"><span class="slider"></span></label></div><div class="status" id="awayHelp">Aktifkan hanya saat ingin menjalankan simulasi.</div></div>
+</main>
+<footer>HOUSE INNOVATION · Versi koneksi MQTT awal. Data sensor dan kendali lampu aktif setelah broker, ESP32, dan kredensial dikonfigurasi.</footer>
+<div class="modal" id="settingsModal"><div class="dialog"><h2>Pengaturan koneksi MQTT</h2><p>Masukkan detail broker MQTT Anda. Contoh rancangan menggunakan HiveMQ Cloud melalui WebSocket TLS.</p>
+<label class="field"><span>Host broker (tanpa https://)</span><input id="host" placeholder="xxxxxx.s1.eu.hivemq.cloud"></label>
+<label class="field"><span>Port WebSocket TLS</span><input id="port" value="8884"></label>
+<label class="field"><span>Username MQTT</span><input id="username" autocomplete="username"></label>
+<label class="field"><span>Password MQTT</span><input id="password" type="password" autocomplete="current-password"></label>
+<label class="field"><span>Device ID (harus sama dengan firmware)</span><input id="device" value="rumah-miniatur-01"></label>
+<div class="note">Jangan membagikan username/password broker. Untuk produksi, gunakan akun terbatas per perangkat dan aturan akses topik (ACL).</div>
+<div class="actions"><button class="btn" id="cancelSettings">Batal</button><button class="btn primary" id="saveSettings">Simpan & hubungkan</button></div></div></div>
+<script>
+const $=id=>document.getElementById(id);
+let client=null, cfg=JSON.parse(localStorage.getItem('hi_mqtt')||'{}'), telemetry=null, lastSeen=0;
+const defaults={host:'',port:'8884',username:'',password:'',device:'rumah-miniatur-01'};
+cfg={...defaults,...cfg};
+function loadCfg(){ $('host').value=cfg.host;$('port').value=cfg.port;$('username').value=cfg.username;$('password').value=cfg.password;$('device').value=cfg.device; }
+function setConn(ok,msg){$('dot').classList.toggle('on',ok);$('connText').textContent=msg;$('deviceState').textContent=ok?'Online':'Offline';$('deviceState').className='tag '+(ok?'good':'bad');$('connectBtn').textContent=ok?'Terhubung':'Hubungkan perangkat';}
+function addAlert(message,level='warn'){const box=$('alerts');if(box.querySelector('.empty'))box.innerHTML='';const d=document.createElement('div');d.className='alert';d.innerHTML=`<span class="tag ${level}">${level==='bad'?'PERINGATAN':'INFO'}</span> &nbsp;${message} <span class="muted">· ${new Date().toLocaleTimeString('id-ID')}</span>`;box.prepend(d);while(box.children.length>12)box.lastChild.remove();}
+function topic(suffix){return `houseinnovation/${cfg.device}/${suffix}`;}
+function publish(obj){if(!client||!client.connected){addAlert('Perintah tidak terkirim: broker belum terhubung.','warn');return;}client.publish(topic('command'),JSON.stringify(obj),{qos:1});}
+function connect(){if(!cfg.host||!cfg.username||!cfg.password){$('settingsModal').classList.add('show');return;}
+ if(client){try{client.end(true)}catch(e){}}
+ const url=`wss://${cfg.host}:${cfg.port}/mqtt`;
+ setConn(false,'Menghubungkan…');
+ client=mqtt.connect(url,{username:cfg.username,password:cfg.password,clientId:'hi_web_'+Math.random().toString(16).slice(2),clean:true,connectTimeout:10000,reconnectPeriod:4000});
+ client.on('connect',()=>{setConn(true,'Terhubung');client.subscribe(topic('telemetry'),{qos:0});client.subscribe(topic('status'),{qos:0});addAlert('Aplikasi terhubung ke broker MQTT.','good');});
+ client.on('reconnect',()=>setConn(false,'Menghubungkan ulang…'));
+ client.on('close',()=>setConn(false,'Terputus'));
+ client.on('error',e=>{setConn(false,'Koneksi gagal');console.error(e);});
+ client.on('message',(t,p)=>{let d;try{d=JSON.parse(p.toString())}catch(e){return}if(t===topic('telemetry'))renderTelemetry(d);if(t===topic('status'))renderStatus(d);});
+}
+function renderTelemetry(d){telemetry=d;lastSeen=Date.now();$('temp').innerHTML=(d.temperature_c==null?'--':Number(d.temperature_c).toFixed(1))+'<span class="unit"> °C</span>';$('humidity').innerHTML=(d.humidity_pct==null?'--':Number(d.humidity_pct).toFixed(0))+'<span class="unit"> %</span>';$('gas').textContent=d.mq2_adc??'--';
+ $('gasStatus').textContent=d.gas_alert?'Nilai melewati ambang uji':'Nilai ADC mentah';$('gasStatus').style.color=d.gas_alert?'var(--yellow)':'var(--muted)';
+ $('water').textContent=d.water_leak?'TERDETEKSI':'AMAN';$('water').style.color=d.water_leak?'var(--red)':'var(--green)';$('waterStatus').textContent=d.water_leak?'Periksa area sensor segera':'Tidak ada air terdeteksi';
+ $('doorState').textContent=d.door_open?'Terbuka':'Tertutup';$('doorState').className='tag '+(d.door_open?'warn':'good');$('doorTag').textContent=d.door_open?'Pintu terbuka':'Pintu tertutup';$('tempStatus').textContent='Data diterima dari ESP32';$('lastUpdate').textContent='Pembaruan terakhir: '+new Date().toLocaleTimeString('id-ID');
+ if(d.water_leak)addAlert('Sensor mendeteksi air pada area pemantauan.','bad');
+ if(d.gas_alert)addAlert('Nilai ADC MQ-2 melewati ambang uji. Periksa kondisi secara langsung.','warn');
+ if(d.door_open)addAlert('Pintu/jendela terdeteksi terbuka.','warn');
+ if(d.lights){for(const [room,on] of Object.entries(d.lights)){const el=document.querySelector(`[data-room="${room}"]`);if(el)el.checked=!!on;const label=$(room+'Text');if(label)label.textContent='Status: '+(on?'menyala':'mati');}updateLightCount();}
+ $('awaySwitch').checked=!!d.away_mode;$('awayState').textContent=d.away_mode?'Away Mode aktif':'Normal';
+}
+function renderStatus(d){if(d.lights){for(const [room,on] of Object.entries(d.lights)){const el=document.querySelector(`[data-room="${room}"]`);if(el)el.checked=!!on;const label=$(room+'Text');if(label)label.textContent='Status: '+(on?'menyala':'mati');}updateLightCount();}}
+function updateLightCount(){let n=[...document.querySelectorAll('.lightSwitch')].filter(x=>x.checked).length;$('lightCount').textContent=n+'/3 menyala';}
+document.querySelectorAll('.lightSwitch').forEach(el=>el.addEventListener('change',()=>{publish({room:el.dataset.room,state:el.checked});$(el.dataset.room+'Text').textContent='Perintah dikirim…';updateLightCount();}));
+$('awaySwitch').addEventListener('change',e=>{publish({mode:'away',enabled:e.target.checked});$('awayHelp').textContent=e.target.checked?'Perintah mengaktifkan Away Mode dikirim ke ESP32.':'Perintah menonaktifkan Away Mode dikirim ke ESP32.';});
+$('settingsBtn').onclick=()=>{$('settingsModal').classList.add('show');loadCfg()};
+$('connectBtn').onclick=()=>connect();$('cancelSettings').onclick=()=>$('settingsModal').classList.remove('show');
+$('saveSettings').onclick=()=>{cfg={host:$('host').value.trim(),port:$('port').value.trim()||'8884',username:$('username').value.trim(),password:$('password').value,device:$('device').value.trim()||defaults.device};localStorage.setItem('hi_mqtt',JSON.stringify(cfg));$('settingsModal').classList.remove('show');connect();};
+$('clearAlerts').onclick=()=>$('alerts').innerHTML='<div class="empty">Belum ada notifikasi.</div>';
+loadCfg();if(cfg.host&&cfg.username&&cfg.password)connect();
+setInterval(()=>{if(lastSeen&&Date.now()-lastSeen>20000){$('lastUpdate').textContent='Data sensor tidak diperbarui lebih dari 20 detik.'}},5000);
+</script></body></html>
